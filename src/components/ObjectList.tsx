@@ -25,12 +25,16 @@ export default function ObjectList() {
   const fetchObjects = async () => {
     try {
       const res = await getObjects();
-      if (res?.data) {
-        setObjects(res.data);
-        setFiltered(res.data);
-      }
+      console.log("API response:", res.data);
+
+      // ✅ S'assure que c'est un tableau
+      const dataArray = Array.isArray(res?.data) ? res.data : [];
+      setObjects(dataArray);
+      setFiltered(dataArray);
     } catch (error) {
       console.error(error);
+      setObjects([]);
+      setFiltered([]);
     } finally {
       setLoading(false);
     }
@@ -41,16 +45,20 @@ export default function ObjectList() {
   }, []);
 
   useEffect(() => {
-    const result = objects.filter((obj) =>
-      obj.title.toLowerCase().includes(search.toLowerCase()),
-    );
-    setFiltered(result);
+    if (Array.isArray(objects)) {
+      const result = objects.filter((obj) =>
+        obj.title.toLowerCase().includes(search.toLowerCase()),
+      );
+      setFiltered(result);
+    } else {
+      setFiltered([]);
+    }
   }, [search, objects]);
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4">
       {/* 🔎 Search bar stylée */}
       <Input
         placeholder="🔍 Search objects..."
@@ -60,8 +68,8 @@ export default function ObjectList() {
       />
 
       {/* 🧱 Grid */}
-      {filtered.length === 0 ? (
-        <p className="text-center text-gray-500">No objects found</p>
+      {!Array.isArray(filtered) || filtered.length === 0 ? (
+        <p className="text-center text-gray-500 mt-6">No objects found</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filtered.map((obj) => (
@@ -76,13 +84,10 @@ export default function ObjectList() {
                   alt={obj.title}
                   className="w-full h-48 object-cover rounded-md mb-3"
                 />
-
                 <h3 className="font-semibold text-lg">{obj.title}</h3>
-
                 <p className="text-sm text-gray-500 line-clamp-2">
                   {obj.description}
                 </p>
-
                 <p className="text-xs text-gray-400 mt-2">
                   {new Date(obj.createdAt).toLocaleDateString()}
                 </p>
